@@ -1,0 +1,38 @@
+<div class="app-layout">
+  
+  <nav class="navigation-bar" [class.mobile-hidden]="isChatRoomOpen">
+    <div class="nav-brand">
+      <span class="material-symbols-outlined logo-icon">forum</span>
+    </div>
+
+    <div class="nav-links">
+      <a routerLink="/app/chats" routerLinkActive="active" title="Chats">
+        <span class="material-symbols-outlined">chat</span>
+        <span class="nav-text">Chats</span>
+      </a>
+      <a routerLink="/app/contacts" routerLinkActive="active" title="Contacts">
+        <span class="material-symbols-outlined">group</span>
+        <span class="nav-text">Contacts</span>
+      </a>
+      <a routerLink="/app/settings" routerLinkActive="active" title="Settings">
+        <span class="material-symbols-outlined">settings</span>
+        <span class="nav-text">Settings</span>
+      </a>
+      <a routerLink="/app/profile" routerLinkActive="active" title="Profile">
+        <span class="material-symbols-outlined">person</span>
+        <span class="nav-text">Profile</span>
+      </a>
+    </div>
+
+    <div class="nav-footer">
+      <button class="logout-btn" (click)="onLogout()" title="Logout">
+        <span class="material-symbols-outlined">logout</span>
+      </button>
+    </div>
+  </nav>
+
+  <main class="content-area" [class.full-screen-mobile]="isChatRoomOpen">
+    <router-outlet></router-outlet>
+  </main>
+
+</div>

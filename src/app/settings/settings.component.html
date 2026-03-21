@@ -1,0 +1,87 @@
+<div class="settings-wrapper">
+  <div class="settings-card">
+    
+    <div class="settings-header">
+      <h2><span class="material-symbols-outlined">settings</span> App Settings</h2>
+      <span class="status-msg" *ngIf="saveStatus">{{ saveStatus }}</span>
+    </div>
+
+    <div class="settings-section">
+      <h3>Appearance</h3>
+      <div class="setting-item">
+        <div class="setting-info">
+          <span class="material-symbols-outlined">dark_mode</span>
+          <div>
+            <h4>Dark Mode</h4>
+            <p>Toggle dark theme across the app</p>
+          </div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" [(ngModel)]="darkMode" (change)="toggleDarkMode()">
+          <span class="slider round"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h3>Notifications</h3>
+      <div class="setting-item">
+        <div class="setting-info">
+          <span class="material-symbols-outlined">notifications_active</span>
+          <div>
+            <h4>Push Notifications</h4>
+            <p>Receive alerts for new messages</p>
+          </div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" [(ngModel)]="notifications" (change)="autoSave()">
+          <span class="slider round"></span>
+        </label>
+      </div>
+      <div class="setting-item">
+        <div class="setting-info">
+          <span class="material-symbols-outlined">volume_up</span>
+          <div>
+            <h4>Sound</h4>
+            <p>Play sound on incoming messages</p>
+          </div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" [(ngModel)]="sound" (change)="autoSave()">
+          <span class="slider round"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h3>Privacy</h3>
+      <div class="setting-item">
+        <div class="setting-info">
+          <span class="material-symbols-outlined">done_all</span>
+          <div>
+            <h4>Read Receipts</h4>
+            <p>Let others know you've read their messages</p>
+          </div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" [(ngModel)]="readReceipts" (change)="autoSave()">
+          <span class="slider round"></span>
+        </label>
+      </div>
+      <div class="setting-item">
+        <div class="setting-info">
+          <span class="material-symbols-outlined">visibility</span>
+          <div>
+            <h4>Last Seen</h4>
+            <p>Show your online status to contacts</p>
+          </div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" [(ngModel)]="lastSeen" (change)="autoSave()">
+          <span class="slider round"></span>
+        </label>
+      </div>
+    </div>
+
+  </div>
+</div>

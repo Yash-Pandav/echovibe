@@ -1,0 +1,73 @@
+<div class="app-wrapper">
+  
+  <div class="settings-container">
+
+    <div class="settings-header">
+      <div class="header-left">
+        <a routerLink="/app/chats" class="back-link">
+          <span class="material-symbols-outlined back-arrow">arrow_back</span> Chats
+        </a>
+      </div>
+      <div class="header-center">
+        <h2 class="settings-title">Profile Settings</h2>
+      </div>
+    </div>
+
+    <div class="settings-body">
+      
+      <div class="avatar-section">
+        <div class="avatar-group" (click)="imageInput.click()">
+          <img [src]="userProfile?.photoURL || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'" alt="User Photo" class="main-avatar">
+          <div class="avatar-overlay">
+            <span class="material-symbols-outlined camera-icon">photo_camera</span>
+            <p class="overlay-text">Change Photo</p>
+          </div>
+          <div *ngIf="isUploading" class="upload-loader">
+            <span class="material-symbols-outlined rotating">sync</span>
+          </div>
+        </div>
+        <p class="email-text">{{ currentAuthUser?.email }}</p>
+      </div>
+      
+      <div class="messages-container" *ngIf="successMessage || errorMessage">
+        <div class="alert alert-success" *ngIf="successMessage">{{ successMessage }}</div>
+        <div class="alert alert-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+      </div>
+
+      <div class="form-container">
+        
+        <div class="form-group">
+          <label for="displayName">Your Name</label>
+          <input 
+            id="displayName"
+            type="text" 
+            [(ngModel)]="newName" 
+            placeholder="Enter your display name" 
+            class="form-input">
+        </div>
+
+      </div>
+
+      <div class="actions-container">
+        <a routerLink="/app/chats" class="cancel-link">Cancel</a>
+        <button 
+          class="save-btn" 
+          (click)="saveProfile()" 
+          [disabled]="isUploading || isUploading">
+          <span *ngIf="isUploading">Saving...</span>
+          <span *ngIf="!isUploading">Save Changes</span>
+        </button>
+      </div>
+
+      <input 
+        type="file" 
+        #imageInput 
+        (change)="onFileSelected($event)" 
+        accept="image/*" 
+        style="display: none;">
+
+    </div>
+
+  </div>
+
+</div>

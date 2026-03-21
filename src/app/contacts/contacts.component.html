@@ -1,0 +1,44 @@
+<div class="contacts-container">
+  
+  <div class="page-header">
+    <div class="header-text">
+      <h2>All Contacts</h2>
+      <p>Find friends and start chatting</p>
+    </div>
+    
+    <div class="search-box">
+      <span class="material-symbols-outlined search-icon">search</span>
+      <input 
+        type="text" 
+        placeholder="Search users by name or email..." 
+        [(ngModel)]="searchQuery" 
+        (input)="onSearch()">
+    </div>
+  </div>
+
+  <div class="contacts-grid">
+    
+    <div class="no-results" *ngIf="filteredUsers.length === 0">
+      <span class="material-symbols-outlined">person_search</span>
+      <p>No contacts found.</p>
+    </div>
+
+    <div class="contact-card" *ngFor="let user of filteredUsers">
+      <div class="card-avatar">
+        <img [src]="user.photoURL || 'https://ui-avatars.com/api/?name=' + user.name + '&background=007bff&color=fff&rounded=true'" alt="User">
+        <span class="status-dot online"></span>
+      </div>
+      
+      <div class="card-info">
+        <h3>{{ user.name }}</h3>
+        <p>{{ user.email }}</p>
+      </div>
+
+      <button class="message-btn" (click)="startNewChat(user)">
+        <span class="material-symbols-outlined">chat</span>
+        Message
+      </button>
+    </div>
+
+  </div>
+</div>

@@ -1,0 +1,95 @@
+<div class="app-wrapper">
+  <div class="main-container">
+    
+    <div class="sidebar" *ngIf="viewMode === 'recent'">
+      <div class="sidebar-header">
+        <h2>Messages</h2>
+        <div class="header-actions">
+          <button class="icon-btn" (click)="openNewChatMode()" title="New Chat">
+            <span class="material-symbols-outlined">chat_add_on</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="search-bar">
+        <input type="text" placeholder="Search recent chats..." [(ngModel)]="searchQuery" (input)="onSearch()">
+      </div>
+
+      <div class="user-list">
+        <div class="no-users" *ngIf="recentChats.length === 0">
+          <p>No recent chats. Click the + icon to start a new chat.</p>
+        </div>
+
+        <div class="no-users" *ngIf="recentChats.length > 0 && filteredRecentChats.length === 0">
+          <p>No chat found.</p>
+        </div>
+
+        <div class="user-item" *ngFor="let user of filteredRecentChats" (click)="startChat(user)">
+          <div class="avatar-wrapper">
+            <img [src]="user.photoURL || 'https://ui-avatars.com/api/?name=' + user.name + '&background=007bff&color=fff&rounded=true'" alt="Avatar">
+            <span class="status-dot" [ngClass]="{'online': user.isOnline}"></span>
+          </div>
+          <div class="user-info">
+            <div class="name-time">
+              <h3>{{ user.name }}</h3>
+              <span class="time" *ngIf="chatMetadata[user.uid]?.lastMessageTime">
+                {{ chatMetadata[user.uid].lastMessageTime.toDate() | date:'shortTime' }}
+              </span>
+            </div>
+            
+            <div class="msg-preview">
+              <p class="last-msg" [ngClass]="{'unread-text': chatMetadata[user.uid]?.['unread_' + currentUserId] > 0}">
+                <span *ngIf="chatMetadata[user.uid]?.lastSenderId === currentUserId" class="material-symbols-outlined check-icon">done_all</span>
+                {{ chatMetadata[user.uid]?.lastMessage || 'Tap to start chatting' }}
+              </p>
+              
+              <div class="unread-badge" *ngIf="chatMetadata[user.uid]?.['unread_' + currentUserId] > 0">
+                {{ chatMetadata[user.uid]?.['unread_' + currentUserId] }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar" *ngIf="viewMode === 'new'">
+      <div class="sidebar-header" style="justify-content: flex-start; gap: 15px;">
+        <button class="icon-btn" (click)="closeNewChatMode()" title="Back">
+          <span class="material-symbols-outlined">arrow_back</span>
+        </button>
+        <h2>New Chat</h2>
+      </div>
+
+      <div class="search-bar">
+        <input type="text" placeholder="Search name or email..." [(ngModel)]="searchQuery" (input)="onSearch()">
+      </div>
+
+      <div class="user-list">
+        <div class="no-users" *ngIf="searchResults.length === 0">
+          <p>No contacts found.</p>
+        </div>
+
+        <div class="user-item" *ngFor="let user of searchResults" (click)="startChat(user)">
+          <div class="avatar-wrapper">
+            <img [src]="user.photoURL || 'https://ui-avatars.com/api/?name=' + user.name + '&background=007bff&color=fff&rounded=true'" alt="Avatar">
+          </div>
+          <div class="user-info">
+            <div class="name-time">
+              <h3>{{ user.name }}</h3>
+            </div>
+            <p class="last-msg">{{ user.email }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-area empty-state">
+      <div class="empty-content">
+        <span class="material-symbols-outlined empty-icon" style="font-size: 80px; color: #cbd5e1;">forum</span>
+        <h3>Echovibe Web</h3>
+        <p>Select a contact to start messaging.</p>
+      </div>
+    </div>
+
+  </div>
+</div>

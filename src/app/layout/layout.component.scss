@@ -1,0 +1,156 @@
+.app-layout {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  background-color: #f4f7f6;
+  overflow: hidden;
+}
+
+/* --- DESKTOP SIDEBAR --- */
+.navigation-bar {
+  width: 80px; /* Slim sidebar */
+  background: #ffffff;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 0;
+  z-index: 100;
+  box-shadow: 2px 0 10px rgba(0,0,0,0.02);
+
+  .nav-brand {
+    margin-bottom: 40px;
+    .logo-icon {
+      font-size: 32px;
+      color: #3b82f6;
+      background: #eff6ff;
+      padding: 10px;
+      border-radius: 12px;
+    }
+  }
+
+  .nav-links {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    flex: 1;
+    width: 100%;
+
+    a {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-decoration: none;
+      color: #94a3b8;
+      padding: 12px 0;
+      position: relative;
+      transition: all 0.3s;
+
+      .material-symbols-outlined { font-size: 28px; }
+      .nav-text { display: none; /* Hidden on slim sidebar */ }
+
+      &:hover { color: #3b82f6; }
+
+      &.active {
+        color: #3b82f6;
+        &::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 10%;
+          height: 80%;
+          width: 4px;
+          background: #3b82f6;
+          border-radius: 0 4px 4px 0;
+        }
+      }
+    }
+  }
+
+  .nav-footer {
+    .logout-btn {
+      background: none;
+      border: none;
+      color: #ef4444;
+      cursor: pointer;
+      padding: 10px;
+      transition: transform 0.2s;
+      &:hover { transform: scale(1.1); background: #fef2f2; border-radius: 10px; }
+      .material-symbols-outlined { font-size: 28px; }
+    }
+  }
+}
+
+.content-area {
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+/* --- MOBILE BOTTOM NAVIGATION --- */
+@media (max-width: 768px) {
+  .app-layout {
+    flex-direction: column; /* Stack vertically on mobile */
+  }
+
+  .navigation-bar {
+    order: 2; /* Move to bottom */
+    width: 100%;
+    height: 65px;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 0;
+    border-right: none;
+    border-top: 1px solid #e2e8f0;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+
+    .nav-brand, .nav-footer {
+      display: none; /* Hide logo and logout on mobile bottom bar */
+    }
+
+    .nav-links {
+      flex-direction: row;
+      justify-content: space-around;
+      align-items: center;
+      gap: 0;
+
+      a {
+        padding: 8px;
+        .material-symbols-outlined { font-size: 26px; margin-bottom: 2px; }
+        .nav-text {
+          display: block;
+          font-size: 10px;
+          font-weight: 500;
+        }
+
+        &.active::before {
+          display: none; /* Remove left border indicator */
+        }
+        &.active {
+          .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
+        }
+      }
+    }
+  }
+
+  .content-area {
+    order: 1; /* Content takes top space */
+    height: calc(100vh - 65px);
+  }
+
+  /* =======================================================
+     NAYA: WHATSAPP MOBILE VIEW MAGIC 
+     ======================================================= */
+  
+  /* Chat room khulte hi bottom nav gayab ho jayega */
+  .navigation-bar.mobile-hidden {
+    display: none !important; 
+  }
+
+  /* Jab chat khuli ho, toh content poore 100% phone screen ko cover karega */
+  .content-area.full-screen-mobile {
+    height: 100vh !important; 
+    padding-bottom: 0 !important;
+  }
+}

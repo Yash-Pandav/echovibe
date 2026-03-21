@@ -1,0 +1,107 @@
+<div class="app-wrapper">
+  <div class="chat-container">
+    
+    <div class="chat-header">
+      <div class="user-profile">
+        <button class="back-btn" routerLink="/app/chats" title="Back to list">&#8592;</button>
+        <div class="avatar">
+          <img src="https://ui-avatars.com/api/?name={{ receiverName }}&background=007bff&color=fff&rounded=true" alt="User">
+          <span class="status-dot online"></span>
+        </div>
+        <div class="user-details">
+          <h2>{{ receiverName }}</h2>
+          <p class="status-text" *ngIf="isReceiverTyping">Typing...</p>
+          <p class="status-text online-color" *ngIf="!isReceiverTyping && receiverData?.isOnline">Online</p>
+          <p class="status-text offline-color" *ngIf="!isReceiverTyping && !receiverData?.isOnline">Offline</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="action-btn"><span class="material-symbols-outlined">call</span></button>
+        <button class="action-btn"><span class="material-symbols-outlined">videocam</span></button>
+      </div>
+    </div>
+
+    <div class="chat-body messages-area">
+      <div *ngFor="let msg of messages" class="message-wrapper" [ngClass]="{'sent': msg.senderId === currentUserId, 'received': msg.senderId !== currentUserId}">
+        
+        <button 
+          class="delete-icon-btn" 
+          *ngIf="msg.senderId === currentUserId && !msg.isDeleted" 
+          (click)="deleteMessage(msg.id)"
+          title="Delete for everyone">
+          <span class="material-symbols-outlined">delete</span>
+        </button>
+
+        <div class="message-bubble" [ngClass]="{'deleted-bubble': msg.isDeleted}">
+          <img *ngIf="msg.imageUrl && !msg.isDeleted" 
+               [src]="msg.imageUrl" 
+               alt="Shared Image" 
+               class="shared-image"
+               (click)="openFullScreen(msg.imageUrl)">
+          <p [ngClass]="{'deleted-text': msg.isDeleted}">{{ msg.text }}</p>
+          
+          <div class="msg-meta" *ngIf="msg.senderId === currentUserId && !msg.isDeleted">
+            <span class="material-symbols-outlined tick-icon" [ngClass]="{'read-blue': msg.status === 'read'}">
+              done_all
+            </span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="message-wrapper received" *ngIf="isReceiverTyping">
+        <div class="message-bubble typing-bubble">
+          <div class="typing-indicator">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="request-banner" *ngIf="!isAccepted && !isBlocked">
+      <div class="banner-content">
+        <span class="material-symbols-outlined shield-icon">security</span>
+        <p>Do you want to continue chatting with <strong>{{ receiverName }}</strong>?</p>
+      </div>
+      <div class="request-actions">
+        <button class="accept-btn" (click)="acceptRequest()">Accept</button>
+        <button class="block-btn" (click)="blockContact()">Block</button>
+      </div>
+    </div>
+
+    <div class="chat-footer" *ngIf="isAccepted && !isBlocked">
+      
+      <div class="emoji-picker-container" *ngIf="showEmojiPicker">
+        <emoji-mart (emojiClick)="addEmoji($event)" [darkMode]="false"></emoji-mart>
+      </div>
+
+      <button class="emoji-btn" (click)="toggleEmojiPicker()" title="Add Emoji">
+        <span class="material-symbols-outlined">sentiment_satisfied</span>
+      </button>
+
+      <input type="file" #imageInput (change)="onImageSelected($event)" accept="image/*" style="display: none;">
+    
+      <button class="attach-btn" (click)="imageInput.click()" title="Attach Image">
+        <span class="material-symbols-outlined">attach_file</span>
+      </button>
+
+      <input 
+        type="text" 
+        placeholder="Type your message here..." 
+        [(ngModel)]="newMessage" 
+        (input)="onTyping()" 
+        (keyup.enter)="sendMessage()"
+      > 
+      
+      <button class="send-btn" (click)="sendMessage()" [disabled]="!newMessage.trim()" title="Send">
+        <span class="material-symbols-outlined" style="color: white; font-size: 20px;">send</span>
+      </button>
+
+    </div>
+
+    <div class="fullscreen-overlay" *ngIf="fullScreenImage" (click)="closeFullScreen()">
+      <span class="close-btn" (click)="closeFullScreen()">&times;</span>
+      <img [src]="fullScreenImage" alt="Full Screen" (click)="$event.stopPropagation()">
+    </div>
+
+  </div>
+</div>

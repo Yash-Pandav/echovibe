@@ -1,0 +1,18 @@
+{
+  "name": "Echovibe",
+  "short_name": "Echovibe",
+  "description": "A real-time chatting application",
+  "theme_color": "#3b82f6",
+  "background_color": "#f8fafc",
+  "display": "standalone",
+  "scope": "./",
+  "start_url": "./",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
