@@ -1,26 +1,23 @@
 import { Component, inject, afterNextRender, NgZone, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router'; 
 import { ChatService } from '../../services/chat.service';
 import { Auth } from '@angular/fire/auth';
 
 @Component({
   selector: 'app-chat-list',
   standalone: true,
-  // Date format ke liye CommonModule zaroori hai
-  imports: [CommonModule, FormsModule, RouterLink], 
+  imports: [CommonModule, FormsModule], 
   templateUrl: './chat-list.component.html',
   styleUrls: ['./chat-list.component.scss']
 })
 export class ChatListComponent {
-  // Saari properties class ke andar honi chahiye
   allUsers: any[] = []; 
   recentChats: any[] = []; 
   filteredRecentChats: any[] = []; 
   searchResults: any[] = []; 
   
-  // YEH THA PROBLEM WALA VARIABLE - Isko class ke andar rakha hai
   chatMetadata: { [key: string]: any } = {}; 
   
   viewMode: 'recent' | 'new' = 'recent'; 
@@ -53,14 +50,13 @@ export class ChatListComponent {
           if (this.viewMode === 'new' && !this.searchQuery) {
             this.searchResults = this.allUsers;
           }
-
-          // Metadata fetcher for recent chats
+          
           this.recentChats.forEach(user => {
             const chatId = this.chatService.getChatId(this.currentUserId, user.uid);
             this.chatService.getChatMetadata(chatId).subscribe(meta => {
               this.ngZone.run(() => {
                 this.chatMetadata[user.uid] = meta;
-                this.cdr.detectChanges(); // Force UI update
+                this.cdr.detectChanges(); 
               });
             });
           });

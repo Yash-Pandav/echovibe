@@ -44,13 +44,13 @@ export class SettingsComponent implements OnInit {
     }
   }
 
-  // NAYA: Jab notification toggle ho, tab permission mango
+  
   toggleNotifications() {
     if (this.notifications) {
       if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
         Notification.requestPermission().then(permission => {
           if (permission !== 'granted') {
-            this.notifications = false; // Agar deny kiya toh wapas OFF kar do
+            this.notifications = false; 
             alert("Please allow notifications in your browser settings to receive alerts.");
           }
           this.autoSave();

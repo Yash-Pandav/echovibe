@@ -8,7 +8,7 @@
 
 /* --- DESKTOP SIDEBAR --- */
 .navigation-bar {
-  width: 80px; /* Slim sidebar */
+  width: 80px; 
   background: #ffffff;
   border-right: 1px solid #e2e8f0;
   display: flex;
@@ -47,7 +47,7 @@
       transition: all 0.3s;
 
       .material-symbols-outlined { font-size: 28px; }
-      .nav-text { display: none; /* Hidden on slim sidebar */ }
+      .nav-text { display: none;}
 
       &:hover { color: #3b82f6; }
 
@@ -91,11 +91,11 @@
 /* --- MOBILE BOTTOM NAVIGATION --- */
 @media (max-width: 768px) {
   .app-layout {
-    flex-direction: column; /* Stack vertically on mobile */
+    flex-direction: column; 
   }
 
   .navigation-bar {
-    order: 2; /* Move to bottom */
+    order: 2; 
     width: 100%;
     height: 65px;
     flex-direction: row;
@@ -106,7 +106,7 @@
     box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
 
     .nav-brand, .nav-footer {
-      display: none; /* Hide logo and logout on mobile bottom bar */
+      display: none; 
     }
 
     .nav-links {
@@ -125,7 +125,7 @@
         }
 
         &.active::before {
-          display: none; /* Remove left border indicator */
+          display: none;
         }
         &.active {
           .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
@@ -135,20 +135,18 @@
   }
 
   .content-area {
-    order: 1; /* Content takes top space */
+    order: 1; 
     height: calc(100vh - 65px);
   }
 
-  /* =======================================================
-     NAYA: WHATSAPP MOBILE VIEW MAGIC 
-     ======================================================= */
   
-  /* Chat room khulte hi bottom nav gayab ho jayega */
+  
+
   .navigation-bar.mobile-hidden {
     display: none !important; 
   }
 
-  /* Jab chat khuli ho, toh content poore 100% phone screen ko cover karega */
+  
   .content-area.full-screen-mobile {
     height: 100vh !important; 
     padding-bottom: 0 !important;

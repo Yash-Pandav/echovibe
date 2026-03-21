@@ -64,21 +64,21 @@ export class LayoutComponent implements OnInit, OnDestroy {
     });
   }
 
-  // NAYA: Code-Generated Premium Notification Sound (No MP3 file needed!)
+  
   playBeepSound() {
     try {
       const audioCtx = new ((window as any).AudioContext || (window as any).webkitAudioContext)();
       const oscillator = audioCtx.createOscillator();
       const gainNode = audioCtx.createGain();
 
-      oscillator.type = 'sine'; // Smooth beep sound
-      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // High pitch (A5 note)
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); 
       
       oscillator.connect(gainNode);
       gainNode.connect(audioCtx.destination);
 
       oscillator.start();
-      // Fade out the sound quickly to make it sound like a proper notification "ting!"
+      
       gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.3); 
       oscillator.stop(audioCtx.currentTime + 0.3);
     } catch (e) {
@@ -93,7 +93,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
       settings = JSON.parse(savedSettings);
     }
 
-    // Awaaz nikalo ager setting on hai (using the new code-generated sound)
+    
     if (settings.sound) {
       this.playBeepSound();
     }
@@ -101,7 +101,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
     if (settings.notifications && Notification.permission === 'granted') {
        new Notification('New Message on Echovibe', {
          body: messageText,
-         icon: 'https://cdn-icons-png.flaticon.com/512/1041/1041916.png' // Ek online logo de diya taaki icon aa jaye
+         icon: 'https://cdn-icons-png.flaticon.com/512/1041/1041916.png' 
        });
     }
   }

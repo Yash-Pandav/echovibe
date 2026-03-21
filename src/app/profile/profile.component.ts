@@ -13,9 +13,9 @@ import { Auth } from '@angular/fire/auth';
   styleUrls: ['./profile.component.scss']
 })
 export class ProfileComponent implements OnInit {
-  // Initialization values: picture database se aayegi, name bhi
-  userProfile: any = null; // Store full DB user data
-  currentAuthUser: any = null; // Store current Auth User
+  
+  userProfile: any = null;
+  currentAuthUser: any = null;
   newName = '';
   isUploading = false;
   successMessage = '';
@@ -24,7 +24,7 @@ export class ProfileComponent implements OnInit {
   private authService = inject(AuthService);
   private auth = inject(Auth);
   private router = inject(Router);
-  private cdr = inject(ChangeDetectorRef); // UI force update ke liye
+  private cdr = inject(ChangeDetectorRef); 
 
   ngOnInit() {
     this.checkAuthentication();
@@ -36,25 +36,25 @@ export class ProfileComponent implements OnInit {
         this.currentAuthUser = user;
         this.loadProfile(user.uid);
       } else {
-        // User logout ho chuka hai, login par bhejo
+        
         this.router.navigate(['/login']);
       }
     });
   }
 
   loadProfile(uid: string) {
-    this.errorMessage = ''; // Purani errors clear karo
-    // permanent DB check
+    this.errorMessage = ''; 
+    
     this.authService.getUserProfile(uid)
       .then((docSnap) => {
         if (docSnap.exists()) {
           this.userProfile = docSnap.data();
           this.newName = this.userProfile['name'] || this.currentAuthUser.displayName || '';
           console.log("Profile data loaded from database.");
-          this.cdr.detectChanges(); // Angular ko batao UI update karna hai
+          this.cdr.detectChanges(); 
         } else {
           console.error("Database user doc does not exist, creating one...");
-          // Fallback, creates new user doc based on Auth User if missing in DB
+         
           this.authService.saveUserData(uid, this.currentAuthUser.displayName || '', this.currentAuthUser.email || '', this.currentAuthUser.photoURL || '');
         }
       })
@@ -65,7 +65,7 @@ export class ProfileComponent implements OnInit {
   }
 
   onFileSelected(event: any) {
-    // Pichli baar wala corrected base64 jugaad upload logic yahan rahega (unchanged from last time)
+    
     const file = event.target.files[0];
     if (file) {
       if (file.size > 1048576) { 
@@ -75,7 +75,7 @@ export class ProfileComponent implements OnInit {
       this.isUploading = true;
       this.successMessage = '';
       this.errorMessage = '';
-      const uid = this.currentAuthUser?.uid; // authService ki jagah official auth use kiya
+      const uid = this.currentAuthUser?.uid; 
 
       if (uid) {
         const reader = new FileReader();
@@ -105,7 +105,6 @@ export class ProfileComponent implements OnInit {
     this.errorMessage = '';
     
     if (this.currentAuthUser && this.newName.trim()) {
-      // Save full profile permanently to database and Auth
       this.authService.saveUserData(this.currentAuthUser.uid, this.newName, this.currentAuthUser.email || '', this.userProfile?.photoURL || '')
         .then(() => {
           this.successMessage = "Profile name updated successfully!";

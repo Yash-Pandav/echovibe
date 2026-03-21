@@ -5,7 +5,7 @@
   height: 100%;
   width: 100%;
   padding: 40px 20px;
-  background-color: #f8fafc; /* Premium light gray background */
+  background-color: #f8fafc; 
   box-sizing: border-box;
   overflow-y: auto;
 }
@@ -124,7 +124,7 @@
     }
   }
 
-  input:checked + .slider { background-color: #10b981; } /* Green when ON */
+  input:checked + .slider { background-color: #10b981; } 
   input:focus + .slider { box-shadow: 0 0 1px #10b981; }
   input:checked + .slider:before { transform: translateX(22px); }
 

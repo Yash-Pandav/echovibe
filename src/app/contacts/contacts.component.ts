@@ -25,9 +25,9 @@ export class ContactsComponent implements OnInit {
   ngOnInit() {
     this.currentUserId = this.auth.currentUser?.uid || '';
     
-    // Fetch all registered users from database
+   
     this.chatService.getAllUsers().subscribe(users => {
-      // Khud ko list se hatao
+      
       this.allUsers = users.filter(u => u.uid !== this.currentUserId);
       this.filteredUsers = [...this.allUsers];
     });
@@ -42,7 +42,7 @@ export class ContactsComponent implements OnInit {
   }
 
   startNewChat(user: any) {
-    // Database me connection add karo aur sidha chat room me bhej do
+    
     this.chatService.addConnection(this.currentUserId, user.uid).then(() => {
       this.router.navigate(['/app/chat-room'], { 
         queryParams: { uid: user.uid, name: user.name } 

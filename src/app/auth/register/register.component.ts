@@ -23,7 +23,7 @@ export class RegisterComponent {
   successMessage = ''; 
 
   onRegister() {
-    // Validate form inputs
+    
     if (!this.name || !this.email || !this.password) {
       this.errorMessage = 'Please fill all the fields!';
       this.successMessage = '';
@@ -32,25 +32,25 @@ export class RegisterComponent {
 
     console.log("Step 1: Registration process started..."); 
 
-    // Create new user with Firebase Auth
+   
     this.authService.register(this.email, this.password)
       .then((userCredential) => {
         console.log("Step 2: Account created! Sending verification email...");
         
         const user = userCredential.user;
 
-        // Save user data to Firestore Database
+        
         this.authService.register(this.email, this.password)
         .then((userCredential) => {
           const user = userCredential.user;
-          // NAYA: 4th parameter ('') add kiya
+          
           this.authService.saveUserData(user.uid, this.name, user.email || '', '')
             .then(() => {
               this.router.navigate(['/app/chats']);
             });
         })
 
-        // Send email verification link
+        
         this.authService.sendVerificationEmail(user)
           .then(() => {
             console.log("Step 4: Verification email sent successfully!");
@@ -65,7 +65,7 @@ export class RegisterComponent {
       .catch((error) => {
         console.error("Register Error: Failed to create account ->", error);
         
-        // Display user-friendly message if email already exists
+        
         if (error.code === 'auth/email-already-in-use') {
           this.errorMessage = 'This email is already registered! Please try another email or go to login.';
         } else {

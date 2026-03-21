@@ -14,7 +14,7 @@ export const routes: Routes = [
   { path: 'login', component: Login },
   { path: 'register', component: RegisterComponent },
   
-  // Naya App Layout Shell
+ 
   { 
     path: 'app', 
     component: LayoutComponent, 

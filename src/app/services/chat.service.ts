@@ -6,7 +6,7 @@ import { Observable, Subject } from 'rxjs';
   providedIn: 'root'
 })
 export class ChatService {
-  // NAYA: Naye messages ko baahar bhejne ka channel
+  
   public newMessageSubject = new Subject<any>();
 
   constructor(private firestore: Firestore) { }
@@ -91,17 +91,17 @@ export class ChatService {
     });
   }
 
-  // NAYA: Ye function background me naye messages ko dekhta rahega
+  
   listenForGlobalNotifications(currentUserId: string, acceptedChatIds: string[]) {
-    // Har connected dost ke chat metadata pe nazar rakhenge
+    
     acceptedChatIds.forEach(chatId => {
        const chatMetaRef = doc(this.firestore, `chats/${chatId}`);
        onSnapshot(chatMetaRef, (docSnap) => {
          if (docSnap.exists()) {
            const data = docSnap.data();
-           // Agar last message hamne nahi bheja, aur naya message aaya hai
+           
            if (data['lastSenderId'] !== currentUserId && data[`unread_${currentUserId}`] > 0) {
-             // Sirf tab trigger karo agar ye naya message lag raha hai
+            
              this.newMessageSubject.next({
                chatId: chatId,
                text: data['lastMessage'],

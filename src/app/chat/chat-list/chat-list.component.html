@@ -12,7 +12,10 @@
       </div>
 
       <div class="search-bar">
-        <input type="text" placeholder="Search recent chats..." [(ngModel)]="searchQuery" (input)="onSearch()">
+        <div class="search-input-wrapper">
+          <span class="material-symbols-outlined search-icon">search</span>
+          <input type="text" placeholder="Search recent chats..." [(ngModel)]="searchQuery" (input)="onSearch()">
+        </div>
       </div>
 
       <div class="user-list">
@@ -61,7 +64,10 @@
       </div>
 
       <div class="search-bar">
-        <input type="text" placeholder="Search name or email..." [(ngModel)]="searchQuery" (input)="onSearch()">
+        <div class="search-input-wrapper">
+          <span class="material-symbols-outlined search-icon">search</span>
+          <input type="text" placeholder="Search name or email..." [(ngModel)]="searchQuery" (input)="onSearch()">
+        </div>
       </div>
 
       <div class="user-list">
@@ -85,7 +91,7 @@
 
     <div class="chat-area empty-state">
       <div class="empty-content">
-        <span class="material-symbols-outlined empty-icon" style="font-size: 80px; color: #cbd5e1;">forum</span>
+        <span class="material-symbols-outlined empty-icon">forum</span>
         <h3>Echovibe Web</h3>
         <p>Select a contact to start messaging.</p>
       </div>

@@ -18,7 +18,7 @@ export class Login {
 
   private authService = inject(AuthService);
   private router = inject(Router);
-  private ngZone = inject(NgZone); // Added NgZone to handle routing properly
+  private ngZone = inject(NgZone); 
 
   onLogin() {
     if (!this.email || !this.password) {

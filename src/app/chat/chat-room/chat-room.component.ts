@@ -27,10 +27,10 @@ export class ChatRoomComponent implements OnInit {
   isBlocked: boolean = false;
   showEmojiPicker = false;
   
-  // Real-Time States
+ 
   isReceiverTyping: boolean = false;
   typingTimeout: any;
-  receiverData: any = null; // Saamne wale ki data track karne ke liye
+  receiverData: any = null; 
 
   fullScreenImage: string | null = null;
 
@@ -53,12 +53,12 @@ export class ChatRoomComponent implements OnInit {
         this.loadMessages();
         this.checkChatStatus(); 
         this.listenToTyping(); 
-        this.listenToReceiverStatus(); // NAYA: Online/Offline check chalu karega
+        this.listenToReceiverStatus(); 
       }
     });
   }
 
-  // NAYA: Saamne wale user ka Online/Offline status sunne wala function
+  
   listenToReceiverStatus() {
     const userRef = doc(this.firestore, `users/${this.receiverId}`);
     onSnapshot(userRef, (docSnap) => {
