@@ -96,8 +96,14 @@ export class LayoutComponent implements OnInit, OnDestroy {
   }
 
   playBeepSound() {
-    // Agar server hai toh aawaz mat nikalo
+    
     if (!isPlatformBrowser(this.platformId)) return;
+
+    // Check if user has interacted with the page
+    if (navigator.userActivation && !navigator.userActivation.hasBeenActive) {
+      console.log("Audio blocked by browser: User hasn't interacted with the screen yet.");
+      return; 
+    }
 
     try {
       const audioCtx = new ((window as any).AudioContext || (window as any).webkitAudioContext)();

@@ -8,9 +8,7 @@ import {
   sendEmailVerification, 
   GoogleAuthProvider, 
   signInWithPopup, 
-  updateProfile,
-  setPersistence,           
-  browserLocalPersistence   
+  updateProfile
 } from '@angular/fire/auth';
 import { Firestore, doc, setDoc, getDoc, updateDoc } from '@angular/fire/firestore';
 import { Storage } from '@angular/fire/storage';
@@ -24,14 +22,9 @@ export class AuthService {
     private auth: Auth, 
     private firestore: Firestore, 
     private storage: Storage,
-    @Inject(PLATFORM_ID) private platformId: Object // Added to check if it's a browser
+    @Inject(PLATFORM_ID) private platformId: Object 
   ) { 
-    // IMPORTANT: Only run this inside a real browser, NOT during server-side build/prerender
-    if (isPlatformBrowser(this.platformId)) {
-      setPersistence(this.auth, browserLocalPersistence)
-        .then(() => console.log('Permanent local persistence enabled!'))
-        .catch((error) => console.error('Error setting persistence:', error));
-    }
+    // removed code
   }
 
   async login(email: string, password: string) {
