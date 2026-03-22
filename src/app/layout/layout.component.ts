@@ -5,7 +5,8 @@ import { ChatService } from '../services/chat.service';
 import { filter } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import { Auth } from '@angular/fire/auth';
-import { doc, onSnapshot, Firestore } from '@angular/fire/firestore';
+import { doc, onSnapshot, Firestore, updateDoc } from '@angular/fire/firestore';
+import { getMessaging, getToken, onMessage } from '@angular/fire/messaging'; // Added FCM imports
 
 @Component({
   selector: 'app-layout',
@@ -41,6 +42,36 @@ export class LayoutComponent implements OnInit, OnDestroy {
       if (user) {
         this.currentUserId = user.uid;
         this.setupGlobalNotifications();
+        this.setupFCM(); // Initialize Push Notifications
+      }
+    });
+  }
+
+  // Setup Firebase Cloud Messaging for Background/Push Notifications
+  setupFCM() {
+    const messaging = getMessaging();
+    
+   
+    const vapidKey = "BKO6RBb5AFC1ot_YxnP9LLtXdF1V_wDpEQeNV1P9-AUqQev3qSY2qxUwV_r1c1H9tWQzxOeHp4F_DA9Y6rmYOwQ"; 
+
+    getToken(messaging, { vapidKey: vapidKey }).then((currentToken) => {
+      if (currentToken) {
+        console.log('FCM Token Generated:', currentToken);
+        // Save token to user's database so we know where to send messages
+        const userRef = doc(this.firestore, `users/${this.currentUserId}`);
+        updateDoc(userRef, { fcmToken: currentToken }).catch(err => console.error(err));
+      } else {
+        console.log('No registration token available. Request permission to generate one.');
+      }
+    }).catch((err) => {
+      console.error('An error occurred while retrieving token. ', err);
+    });
+
+    
+    onMessage(messaging, (payload) => {
+      console.log('Foreground Message received. ', payload);
+      if (payload.notification && payload.notification.body) {
+        this.triggerNotification(payload.notification.body);
       }
     });
   }
@@ -64,7 +95,6 @@ export class LayoutComponent implements OnInit, OnDestroy {
     });
   }
 
-  
   playBeepSound() {
     try {
       const audioCtx = new ((window as any).AudioContext || (window as any).webkitAudioContext)();
@@ -78,11 +108,11 @@ export class LayoutComponent implements OnInit, OnDestroy {
       gainNode.connect(audioCtx.destination);
 
       oscillator.start();
-      
+
       gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.3); 
       oscillator.stop(audioCtx.currentTime + 0.3);
     } catch (e) {
-      console.warn("Audio play failed, user might not have interacted with the document yet.", e);
+      console.warn("Audio play failed.", e);
     }
   }
 
@@ -93,7 +123,6 @@ export class LayoutComponent implements OnInit, OnDestroy {
       settings = JSON.parse(savedSettings);
     }
 
-    
     if (settings.sound) {
       this.playBeepSound();
     }
@@ -101,7 +130,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
     if (settings.notifications && Notification.permission === 'granted') {
        new Notification('New Message on Echovibe', {
          body: messageText,
-         icon: 'https://cdn-icons-png.flaticon.com/512/1041/1041916.png' 
+         icon: 'logo.png' 
        });
     }
   }
@@ -115,7 +144,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
   onLogout() {
     this.authService.logout().then(() => {
       this.ngZone.run(() => {
-        console.log("Logged out from layout!");
+
         this.router.navigate(['/login']); 
       });
     }).catch((error) => {

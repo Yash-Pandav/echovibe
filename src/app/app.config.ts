@@ -7,6 +7,7 @@ import { provideAuth, getAuth } from '@angular/fire/auth';
 import { provideFirestore, getFirestore } from '@angular/fire/firestore';
 
 import { provideStorage, getStorage } from '@angular/fire/storage'; 
+import { provideMessaging, getMessaging } from '@angular/fire/messaging';
 import { environment } from '../environments/environment';
 import { provideServiceWorker } from '@angular/service-worker';
 
@@ -16,11 +17,11 @@ export const appConfig: ApplicationConfig = {
     provideFirebaseApp(() => initializeApp(environment.firebaseConfig)),
     provideAuth(() => getAuth()),
     provideFirestore(() => getFirestore()),
-    
-    
-    provideStorage(() => getStorage()), provideServiceWorker('ngsw-worker.js', {
-            enabled: !isDevMode(),
-            registrationStrategy: 'registerWhenStable:30000'
-          }) 
+    provideStorage(() => getStorage()), 
+    provideMessaging(() => getMessaging()), 
+    provideServiceWorker('ngsw-worker.js', {
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerWhenStable:30000'
+    }) 
   ]
 };

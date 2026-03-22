@@ -20,7 +20,7 @@
           <img [src]="userProfile?.photoURL || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'" alt="User Photo" class="main-avatar">
           <div class="avatar-overlay">
             <span class="material-symbols-outlined camera-icon">photo_camera</span>
-            <p class="overlay-text">Change Photo</p>
+            <p class="overlay-text">Change</p>
           </div>
           <div *ngIf="isUploading" class="upload-loader">
             <span class="material-symbols-outlined rotating">sync</span>
@@ -35,7 +35,7 @@
       </div>
 
       <div class="form-container">
-        
+
         <div class="form-group">
           <label for="displayName">Your Name</label>
           <input 
@@ -48,14 +48,23 @@
 
       </div>
 
-      <div class="actions-container">
-        <a routerLink="/app/chats" class="cancel-link">Cancel</a>
+      <div class="actions-container" style="display: flex; flex-direction: column; gap: 15px;">
+        <div style="display: flex; justify-content: space-between; width: 100%;">
+          <a routerLink="/app/chats" class="cancel-link" style="display: flex; align-items: center;">Cancel</a>
+          <button 
+            class="save-btn" 
+            (click)="saveProfile()" 
+            [disabled]="isUploading">
+            <span *ngIf="isUploading">Saving...</span>
+            <span *ngIf="!isUploading">Save Changes</span>
+          </button>
+        </div>
+
         <button 
-          class="save-btn" 
-          (click)="saveProfile()" 
-          [disabled]="isUploading || isUploading">
-          <span *ngIf="isUploading">Saving...</span>
-          <span *ngIf="!isUploading">Save Changes</span>
+          (click)="logout()" 
+          style="width: 100%; padding: 12px; background-color: #ef4444; color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 15px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 10px;">
+          <span class="material-symbols-outlined">logout</span>
+          Log Out
         </button>
       </div>
 

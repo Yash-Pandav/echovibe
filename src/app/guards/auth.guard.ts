@@ -8,12 +8,15 @@ export const authGuard: CanActivateFn = (route, state) => {
 
   
   return new Promise((resolve) => {
-    onAuthStateChanged(auth, (user) => {
+    
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      unsubscribe(); 
+      
       if (user) {
-        
+
         resolve(true); 
       } else {
-        
+
         console.warn("Access Denied: Please login first!");
         router.navigate(['/login']);
         resolve(false); 

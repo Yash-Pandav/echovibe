@@ -50,11 +50,10 @@ export class ProfileComponent implements OnInit {
         if (docSnap.exists()) {
           this.userProfile = docSnap.data();
           this.newName = this.userProfile['name'] || this.currentAuthUser.displayName || '';
-          console.log("Profile data loaded from database.");
+
           this.cdr.detectChanges(); 
         } else {
-          console.error("Database user doc does not exist, creating one...");
-         
+
           this.authService.saveUserData(uid, this.currentAuthUser.displayName || '', this.currentAuthUser.email || '', this.currentAuthUser.photoURL || '');
         }
       })
@@ -65,7 +64,7 @@ export class ProfileComponent implements OnInit {
   }
 
   onFileSelected(event: any) {
-    
+
     const file = event.target.files[0];
     if (file) {
       if (file.size > 1048576) { 
@@ -114,6 +113,17 @@ export class ProfileComponent implements OnInit {
           console.error("Update failed:", error);
           this.errorMessage = "Failed to update profile name.";
         });
+    }
+  }
+
+  // Logout ka function
+  async logout() {
+    try {
+      await this.authService.logout();
+      this.router.navigate(['/login']);
+    } catch (error) {
+      console.error("Logout failed:", error);
+      alert("Failed to logout. Please try again.");
     }
   }
 }
