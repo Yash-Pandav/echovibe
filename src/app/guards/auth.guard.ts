@@ -1,26 +1,24 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { Auth, onAuthStateChanged } from '@angular/fire/auth';
+import { Auth, authState } from '@angular/fire/auth';
+import { map, take } from 'rxjs/operators';
 
 export const authGuard: CanActivateFn = (route, state) => {
   const auth = inject(Auth);
   const router = inject(Router);
 
   
-  return new Promise((resolve) => {
-    
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      unsubscribe(); 
-      
+  return authState(auth).pipe(
+    take(1),
+    map(user => {
       if (user) {
-
-        resolve(true); 
-      } else {
-
+        return true; 
+      } 
+      else {
         console.warn("Access Denied: Please login first!");
         router.navigate(['/login']);
-        resolve(false); 
+        return false; 
       }
-    });
-  });
+    })
+  );
 };
