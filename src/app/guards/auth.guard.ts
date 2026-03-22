@@ -1,24 +1,31 @@
-import { inject } from '@angular/core';
+import { inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { CanActivateFn, Router } from '@angular/router';
-import { Auth, authState } from '@angular/fire/auth';
-import { map, take } from 'rxjs/operators';
+import { Auth } from '@angular/fire/auth';
 
-export const authGuard: CanActivateFn = (route, state) => {
+export const authGuard: CanActivateFn = async (route, state) => {
   const auth = inject(Auth);
   const router = inject(Router);
+  const platformId = inject(PLATFORM_ID); 
 
   
-  return authState(auth).pipe(
-    take(1),
-    map(user => {
-      if (user) {
-        return true; 
-      } 
-      else {
-        console.warn("Access Denied: Please login first!");
-        router.navigate(['/login']);
-        return false; 
-      }
-    })
-  );
+  if (!isPlatformBrowser(platformId)) {
+    return true; 
+  }
+  
+  try {
+    await auth.authStateReady();
+
+    if (auth.currentUser) {
+      return true; 
+    } else {
+      console.warn("Access Denied: Please login first!");
+      router.navigate(['/login']);
+      return false; 
+    }
+  } catch (error) {
+    console.error("Auth Guard Error:", error);
+    router.navigate(['/login']);
+    return false;
+  }
 };
