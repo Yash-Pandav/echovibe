@@ -1,0 +1,24 @@
+<div class="call-overlay">
+  <video #remoteVideo autoplay playsinline class="remote-video"></video>
+  
+  <video #localVideo autoplay playsinline [muted]="true" class="local-video" [class.hidden]="!isVideoCall"></video>
+
+  <div class="call-header">
+    <h2>{{ callerName || 'Unknown Contact' }}</h2>
+    <p>{{ callStatus }}</p>
+  </div>
+
+  <div class="call-controls">
+    <button class="control-btn" (click)="toggleAudio()" [class.active-mute]="isAudioMuted">
+      <span class="material-symbols-outlined">{{ isAudioMuted ? 'mic_off' : 'mic' }}</span>
+    </button>
+    
+    <button class="control-btn" (click)="toggleVideo()" *ngIf="isVideoCall" [class.active-mute]="isVideoOff">
+      <span class="material-symbols-outlined">{{ isVideoOff ? 'videocam_off' : 'videocam' }}</span>
+    </button>
+    
+    <button class="control-btn hangup-btn" (click)="endCall()">
+      <span class="material-symbols-outlined">call_end</span>
+    </button>
+  </div>
+</div>

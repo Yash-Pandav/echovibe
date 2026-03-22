@@ -1,6 +1,4 @@
-/* =======================================
-   FULL & FINAL CHAT ROOM SCSS
-   ======================================= */
+
 
 .app-wrapper {
   display: flex;
@@ -64,7 +62,6 @@
   @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
 }
 
-
 .typing-bubble {
   padding: 12px 18px !important;
   background-color: #f1f5f9 !important;
@@ -115,7 +112,6 @@
     margin-bottom: 15px;
     gap: 10px;
 
-    
     .delete-icon-btn {
       opacity: 0;
       visibility: hidden;
@@ -220,8 +216,6 @@
   padding: 15px 25px; 
   background: #ffffff; 
   border-top: 1px solid #f0f0f0;
-  
-  
   position: relative; 
   z-index: 10;
   
@@ -282,7 +276,6 @@
   }
 }
 
-
 @keyframes popIn {
   0% { opacity: 0; transform: scale(0.9) translateY(10px); }
   100% { opacity: 1; transform: scale(1) translateY(0); }
@@ -332,4 +325,74 @@
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+/* =======================================
+   INCOMING CALL BANNER 
+   ======================================= */
+.incoming-call-banner {
+  position: absolute;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #2a2f32;
+  color: white;
+  width: 90%;
+  max-width: 400px;
+  border-radius: 12px;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  z-index: 1000;
+  border: 1px solid #3b4043;
+  animation: slideDown 0.4s ease-out;
+
+  .caller-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+
+    .icon {
+      font-size: 30px;
+      color: #00a884;
+      &.pulse { animation: ringPulse 1.5s infinite; }
+    }
+
+    h4 { margin: 0; font-size: 18px; font-weight: 500; }
+    p { margin: 5px 0 0; font-size: 13px; color: #8696a0; }
+  }
+
+  .call-actions {
+    display: flex;
+    gap: 10px;
+
+    button {
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      border: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      color: white;
+
+      &.accept-btn { background-color: #00a884; }
+      &.reject-btn { background-color: #ef4444; }
+      span { font-size: 24px; }
+    }
+  }
+}
+
+@keyframes slideDown {
+  from { top: -100px; opacity: 0; }
+  to { top: 80px; opacity: 1; }
+}
+
+@keyframes ringPulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.7; }
+  100% { transform: scale(1); opacity: 1; }
 }

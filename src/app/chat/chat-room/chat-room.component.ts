@@ -3,14 +3,16 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router'; 
 import { ChatService } from '../../services/chat.service';
+import { CallService } from '../../services/call.service';
+import { CallScreenComponent } from '../call-screen/call-screen.component'; 
 import { Auth } from '@angular/fire/auth';
-import { Firestore, doc, onSnapshot } from '@angular/fire/firestore';
+import { Firestore, doc, onSnapshot, updateDoc, deleteDoc } from '@angular/fire/firestore'; 
 import { PickerComponent } from '@ctrl/ngx-emoji-mart';
 
 @Component({
   selector: 'app-chat-room',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, PickerComponent],
+  imports: [CommonModule, FormsModule, RouterLink, PickerComponent, CallScreenComponent],
   templateUrl: './chat-room.component.html',
   styleUrls: ['./chat-room.component.scss'],
   encapsulation: ViewEncapsulation.Emulated
@@ -27,16 +29,21 @@ export class ChatRoomComponent implements OnInit {
   isBlocked: boolean = false;
   showEmojiPicker = false;
   
- 
   isReceiverTyping: boolean = false;
   typingTimeout: any;
   receiverData: any = null; 
-
   fullScreenImage: string | null = null;
+
+  // === CALLING SYSTEM VARIABLES ===
+  isInCall = false;
+  isIncomingCall = false;
+  isVideoCall = false;
+  callStatus = '';
 
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private chatService = inject(ChatService);
+  private callService = inject(CallService); // NEW
   private auth = inject(Auth);
   private ngZone = inject(NgZone);
   private cdr = inject(ChangeDetectorRef);
@@ -54,11 +61,108 @@ export class ChatRoomComponent implements OnInit {
         this.checkChatStatus(); 
         this.listenToTyping(); 
         this.listenToReceiverStatus(); 
+        this.listenForCalls(); 
       }
     });
   }
 
-  
+  // ==========================================
+  //         WEBRTC CALLING LOGIC
+  // ==========================================
+
+  // 1. Listen for Incoming Calls
+  listenForCalls() {
+    const callDoc = doc(this.firestore, `calls/${this.chatId}`);
+    
+    onSnapshot(callDoc, (snapshot) => {
+      this.ngZone.run(() => {
+        const data = snapshot.data();
+
+        // call cut document delete
+        if (!snapshot.exists() && this.isInCall) {
+          this.endCall(false); 
+        }
+
+        if (snapshot.exists() && data) {
+          // Incoming Call
+          if (data['offer'] && !this.isInCall && data['callerId'] !== this.currentUserId) {
+            this.isIncomingCall = true;
+            this.isVideoCall = data['isVideo'];
+          }
+
+          // Call Pick 
+          if (data['answer'] && this.isInCall && data['callerId'] === this.currentUserId) {
+             this.callStatus = 'Connected';
+          }
+        }
+        this.cdr.detectChanges();
+      });
+    });
+  }
+
+  // 2. Start Call (Dialing)
+  async startCall(isVideo: boolean) {
+    try {
+      this.isVideoCall = isVideo;
+      this.isInCall = true;
+      this.callStatus = 'Calling...';
+      
+      await this.callService.setupMediaSources(isVideo);
+      await this.callService.createCall(this.chatId);
+
+      // Firebase ko batao ki kisne call kiya hai
+      await updateDoc(doc(this.firestore, `calls/${this.chatId}`), {
+        callerId: this.currentUserId,
+        isVideo: isVideo
+      });
+    } catch (error) {
+      console.error("Camera/Mic Permission Denied", error);
+      alert("Please allow Camera & Microphone access to make calls.");
+      this.endCall();
+    }
+  }
+
+  // 3. Accept Incoming Call
+  async acceptCall() {
+    try {
+      this.isIncomingCall = false;
+      this.isInCall = true;
+      this.callStatus = 'Connecting...';
+      
+      await this.callService.setupMediaSources(this.isVideoCall);
+      await this.callService.answerCall(this.chatId);
+    } catch (error) {
+      console.error("Camera/Mic Permission Denied", error);
+      alert("Please allow Camera & Microphone access to answer calls.");
+      this.endCall();
+    }
+  }
+
+  // 4. Reject / Cut Call
+  async endCall(deleteDocFromFirebase: boolean = true) {
+    this.callService.hangup();
+    this.isInCall = false;
+    this.isIncomingCall = false;
+    this.callStatus = '';
+    this.cdr.detectChanges();
+
+    if (deleteDocFromFirebase) {
+      try {
+        await deleteDoc(doc(this.firestore, `calls/${this.chatId}`));
+      } catch (e) {
+        console.log("Call doc already deleted", e);
+      }
+    }
+  }
+
+  rejectCall() {
+    this.endCall(true);
+  }
+
+  // ==========================================
+  //          CHAT LOGIC
+  // ==========================================
+
   listenToReceiverStatus() {
     const userRef = doc(this.firestore, `users/${this.receiverId}`);
     onSnapshot(userRef, (docSnap) => {

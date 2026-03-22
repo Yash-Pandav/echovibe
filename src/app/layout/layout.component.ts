@@ -1,12 +1,12 @@
-import { Component, inject, NgZone, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, NgZone, OnInit, OnDestroy, PLATFORM_ID } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet, NavigationEnd } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { ChatService } from '../services/chat.service';
 import { filter } from 'rxjs/operators';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Auth } from '@angular/fire/auth';
 import { doc, onSnapshot, Firestore, updateDoc } from '@angular/fire/firestore';
-import { getMessaging, getToken, onMessage } from '@angular/fire/messaging'; // Added FCM imports
+import { getMessaging, getToken, onMessage } from '@angular/fire/messaging'; 
 
 @Component({
   selector: 'app-layout',
@@ -22,6 +22,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
   private ngZone = inject(NgZone);
   private auth = inject(Auth);
   private firestore = inject(Firestore);
+  private platformId = inject(PLATFORM_ID); 
 
   isChatRoomOpen: boolean = false;
   currentUserId: string = '';
@@ -42,22 +43,22 @@ export class LayoutComponent implements OnInit, OnDestroy {
       if (user) {
         this.currentUserId = user.uid;
         this.setupGlobalNotifications();
-        this.setupFCM(); // Initialize Push Notifications
+        
+        // Push Notifications only browser will allow 
+        if (isPlatformBrowser(this.platformId)) {
+          this.setupFCM(); 
+        }
       }
     });
   }
 
-  // Setup Firebase Cloud Messaging for Background/Push Notifications
   setupFCM() {
     const messaging = getMessaging();
-    
-   
     const vapidKey = "BKO6RBb5AFC1ot_YxnP9LLtXdF1V_wDpEQeNV1P9-AUqQev3qSY2qxUwV_r1c1H9tWQzxOeHp4F_DA9Y6rmYOwQ"; 
 
     getToken(messaging, { vapidKey: vapidKey }).then((currentToken) => {
       if (currentToken) {
         console.log('FCM Token Generated:', currentToken);
-        // Save token to user's database so we know where to send messages
         const userRef = doc(this.firestore, `users/${this.currentUserId}`);
         updateDoc(userRef, { fcmToken: currentToken }).catch(err => console.error(err));
       } else {
@@ -67,7 +68,6 @@ export class LayoutComponent implements OnInit, OnDestroy {
       console.error('An error occurred while retrieving token. ', err);
     });
 
-    
     onMessage(messaging, (payload) => {
       console.log('Foreground Message received. ', payload);
       if (payload.notification && payload.notification.body) {
@@ -96,6 +96,9 @@ export class LayoutComponent implements OnInit, OnDestroy {
   }
 
   playBeepSound() {
+    // Agar server hai toh aawaz mat nikalo
+    if (!isPlatformBrowser(this.platformId)) return;
+
     try {
       const audioCtx = new ((window as any).AudioContext || (window as any).webkitAudioContext)();
       const oscillator = audioCtx.createOscillator();
@@ -117,6 +120,9 @@ export class LayoutComponent implements OnInit, OnDestroy {
   }
 
   triggerNotification(messageText: string) {
+    // SSR safe check
+    if (!isPlatformBrowser(this.platformId)) return;
+
     const savedSettings = localStorage.getItem('echovibe_settings');
     let settings = { notifications: true, sound: true };
     if (savedSettings) {
@@ -127,7 +133,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
       this.playBeepSound();
     }
 
-    if (settings.notifications && Notification.permission === 'granted') {
+    if (settings.notifications && 'Notification' in window && Notification.permission === 'granted') {
        new Notification('New Message on Echovibe', {
          body: messageText,
          icon: 'logo.png' 
@@ -144,7 +150,6 @@ export class LayoutComponent implements OnInit, OnDestroy {
   onLogout() {
     this.authService.logout().then(() => {
       this.ngZone.run(() => {
-
         this.router.navigate(['/login']); 
       });
     }).catch((error) => {

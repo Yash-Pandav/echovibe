@@ -16,8 +16,8 @@
         </div>
       </div>
       <div class="header-actions">
-        <button class="action-btn"><span class="material-symbols-outlined">call</span></button>
-        <button class="action-btn"><span class="material-symbols-outlined">videocam</span></button>
+        <button class="action-btn" (click)="startCall(false)"><span class="material-symbols-outlined">call</span></button>
+        <button class="action-btn" (click)="startCall(true)"><span class="material-symbols-outlined">videocam</span></button>
       </div>
     </div>
 
@@ -101,6 +101,32 @@
     <div class="fullscreen-overlay" *ngIf="fullScreenImage" (click)="closeFullScreen()">
       <span class="close-btn" (click)="closeFullScreen()">&times;</span>
       <img [src]="fullScreenImage" alt="Full Screen" (click)="$event.stopPropagation()">
+    </div>
+
+    <app-call-screen
+      *ngIf="isInCall"
+      [isVideoCall]="isVideoCall"
+      [callerName]="receiverName"
+      [callStatus]="callStatus"
+      (callEnded)="endCall()">
+    </app-call-screen>
+    
+    <div class="incoming-call-banner" *ngIf="isIncomingCall && !isInCall">
+      <div class="caller-info">
+        <span class="material-symbols-outlined icon" [class.pulse]="true">{{ isVideoCall ? 'videocam' : 'call' }}</span>
+        <div>
+          <h4>{{ receiverName }}</h4>
+          <p>Incoming {{ isVideoCall ? 'Video' : 'Audio' }} Call...</p>
+        </div>
+      </div>
+      <div class="call-actions">
+        <button class="reject-btn" (click)="rejectCall()" title="Reject">
+          <span class="material-symbols-outlined">call_end</span>
+        </button>
+        <button class="accept-btn" (click)="acceptCall()" title="Accept">
+          <span class="material-symbols-outlined">call</span>
+        </button>
+      </div>
     </div>
 
   </div>
