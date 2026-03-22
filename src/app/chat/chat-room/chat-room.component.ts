@@ -1,9 +1,9 @@
-import { Component, inject, OnInit, NgZone, ChangeDetectorRef, ViewEncapsulation } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, OnInit, NgZone, ChangeDetectorRef, ViewEncapsulation, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router'; 
 import { ChatService } from '../../services/chat.service';
-import { CallService } from '../../services/call.service';
+import { CallService } from '../../services/call.service'; 
 import { CallScreenComponent } from '../call-screen/call-screen.component'; 
 import { Auth } from '@angular/fire/auth';
 import { Firestore, doc, onSnapshot, updateDoc, deleteDoc } from '@angular/fire/firestore'; 
@@ -43,11 +43,12 @@ export class ChatRoomComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private chatService = inject(ChatService);
-  private callService = inject(CallService); // NEW
+  private callService = inject(CallService); 
   private auth = inject(Auth);
   private ngZone = inject(NgZone);
   private cdr = inject(ChangeDetectorRef);
   private firestore = inject(Firestore);
+  private platformId = inject(PLATFORM_ID); 
 
   ngOnInit() {
     this.currentUserId = this.auth.currentUser?.uid || '';
@@ -57,11 +58,14 @@ export class ChatRoomComponent implements OnInit {
 
       if (this.currentUserId && this.receiverId) {
         this.chatId = this.chatService.getChatId(this.currentUserId, this.receiverId);
-        this.loadMessages();
-        this.checkChatStatus(); 
-        this.listenToTyping(); 
-        this.listenToReceiverStatus(); 
-        this.listenForCalls(); 
+        
+        if (isPlatformBrowser(this.platformId)) {
+          this.loadMessages();
+          this.checkChatStatus(); 
+          this.listenToTyping(); 
+          this.listenToReceiverStatus(); 
+          this.listenForCalls(); 
+        }
       }
     });
   }
@@ -70,7 +74,6 @@ export class ChatRoomComponent implements OnInit {
   //         WEBRTC CALLING LOGIC
   // ==========================================
 
-  // 1. Listen for Incoming Calls
   listenForCalls() {
     const callDoc = doc(this.firestore, `calls/${this.chatId}`);
     
@@ -78,19 +81,16 @@ export class ChatRoomComponent implements OnInit {
       this.ngZone.run(() => {
         const data = snapshot.data();
 
-        // call cut document delete
         if (!snapshot.exists() && this.isInCall) {
           this.endCall(false); 
         }
 
         if (snapshot.exists() && data) {
-          // Incoming Call
           if (data['offer'] && !this.isInCall && data['callerId'] !== this.currentUserId) {
             this.isIncomingCall = true;
             this.isVideoCall = data['isVideo'];
           }
 
-          // Call Pick 
           if (data['answer'] && this.isInCall && data['callerId'] === this.currentUserId) {
              this.callStatus = 'Connected';
           }
@@ -100,7 +100,6 @@ export class ChatRoomComponent implements OnInit {
     });
   }
 
-  // 2. Start Call (Dialing)
   async startCall(isVideo: boolean) {
     try {
       this.isVideoCall = isVideo;
@@ -110,7 +109,6 @@ export class ChatRoomComponent implements OnInit {
       await this.callService.setupMediaSources(isVideo);
       await this.callService.createCall(this.chatId);
 
-      // Firebase ko batao ki kisne call kiya hai
       await updateDoc(doc(this.firestore, `calls/${this.chatId}`), {
         callerId: this.currentUserId,
         isVideo: isVideo
@@ -122,7 +120,6 @@ export class ChatRoomComponent implements OnInit {
     }
   }
 
-  // 3. Accept Incoming Call
   async acceptCall() {
     try {
       this.isIncomingCall = false;
@@ -138,7 +135,6 @@ export class ChatRoomComponent implements OnInit {
     }
   }
 
-  // 4. Reject / Cut Call
   async endCall(deleteDocFromFirebase: boolean = true) {
     this.callService.hangup();
     this.isInCall = false;
@@ -160,7 +156,7 @@ export class ChatRoomComponent implements OnInit {
   }
 
   // ==========================================
-  //          CHAT LOGIC
+  //         EXISTING CHAT LOGIC
   // ==========================================
 
   listenToReceiverStatus() {
