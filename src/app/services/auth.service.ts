@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { 
   Auth, 
   createUserWithEmailAndPassword, 
@@ -8,47 +9,48 @@ import {
   GoogleAuthProvider, 
   signInWithPopup, 
   updateProfile,
-  setPersistence,          
+  setPersistence,           
   browserLocalPersistence   
 } from '@angular/fire/auth';
 import { Firestore, doc, setDoc, getDoc, updateDoc } from '@angular/fire/firestore';
-import { Storage, ref, uploadBytesResumable, getDownloadURL } from '@angular/fire/storage';
+import { Storage } from '@angular/fire/storage';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
   
-  constructor(private auth: Auth, private firestore: Firestore, private storage: Storage) { 
-    // IMPORTANT: Force Firebase to keep the user logged in permanently
-    setPersistence(this.auth, browserLocalPersistence)
-      .then(() => console.log('Permanent local persistence enabled!'))
-      .catch((error) => console.error('Error setting persistence:', error));
+  constructor(
+    private auth: Auth, 
+    private firestore: Firestore, 
+    private storage: Storage,
+    @Inject(PLATFORM_ID) private platformId: Object // Added to check if it's a browser
+  ) { 
+    // IMPORTANT: Only run this inside a real browser, NOT during server-side build/prerender
+    if (isPlatformBrowser(this.platformId)) {
+      setPersistence(this.auth, browserLocalPersistence)
+        .then(() => console.log('Permanent local persistence enabled!'))
+        .catch((error) => console.error('Error setting persistence:', error));
+    }
   }
 
   async login(email: string, password: string) {
-
     const userCredential = await signInWithEmailAndPassword(this.auth, email, password);
-
     this.setOnlineStatus(userCredential.user.uid, true);
     return userCredential;
   }
 
   async register(email: string, password: string) {
     const userCredential = await createUserWithEmailAndPassword(this.auth, email, password);
-
     this.setOnlineStatus(userCredential.user.uid, true);
     return userCredential;
   }
 
   async logout() {
-
     const user = this.auth.currentUser;
     if (user) {
-
       await this.setOnlineStatus(user.uid, false);
     }
-
     return signOut(this.auth);
   }
 
@@ -66,7 +68,6 @@ export class AuthService {
   async saveUserData(uid: string, name: string, email: string, photoURL: string) {
     try {
       const userDocRef = doc(this.firestore, `users/${uid}`);
-
       
       await setDoc(userDocRef, {
         name: name,
@@ -93,7 +94,6 @@ export class AuthService {
   async updateProfilePicInDatabase(uid: string, base64Image: string): Promise<void> {
     try {
       const userDocRef = doc(this.firestore, `users/${uid}`);
-
       
       await setDoc(userDocRef, {
         photoURL: base64Image
