@@ -1,6 +1,7 @@
-import { Component, ElementRef, ViewChild, Input, Output, EventEmitter, AfterViewInit, inject } from '@angular/core';
+import { Component, ElementRef, ViewChild, Input, Output, EventEmitter, OnInit, OnDestroy, inject, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CallService } from '../../services/call.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-call-screen',
@@ -9,44 +10,68 @@ import { CallService } from '../../services/call.service';
   templateUrl: './call-screen.component.html',
   styleUrls: ['./call-screen.component.scss']
 })
-export class CallScreenComponent implements AfterViewInit {
+export class CallScreenComponent implements OnInit, OnDestroy {
   @ViewChild('localVideo') localVideo!: ElementRef<HTMLVideoElement>;
   @ViewChild('remoteVideo') remoteVideo!: ElementRef<HTMLVideoElement>;
 
   @Input() isVideoCall: boolean = true;
   @Input() callerName: string = 'Friend';
-  @Input() callStatus: string = 'Connecting...';
+  
+  // Status is managed 
+  callStatus: string = 'Connecting...';
   
   @Output() callEnded = new EventEmitter<void>();
 
   private callService = inject(CallService);
+  private ngZone = inject(NgZone); 
+
+  private localStreamSub?: Subscription;
+  private remoteStreamSub?: Subscription;
 
   isAudioMuted = false;
   isVideoOff = false;
 
-  ngAfterViewInit() {
-   
-    
-    // 1. Show our own camera (Local Stream)
-    if (this.callService.localStream) {
-      this.localVideo.nativeElement.srcObject = this.callService.localStream;
-    }
+  ngOnInit() {
+    this.subscribeToStreams();
+  }
 
-    // 2. Listen for the friend's camera (Remote Stream)
+  ngOnDestroy() {
     
-    const checkStreamInterval = setInterval(() => {
-      if (this.callService.remoteStream && this.callService.remoteStream.getTracks().length > 0) {
-        this.remoteVideo.nativeElement.srcObject = this.callService.remoteStream;
-        this.callStatus = 'Connected';
-        clearInterval(checkStreamInterval);
-      }
-    }, 500);
+    this.localStreamSub?.unsubscribe();
+    this.remoteStreamSub?.unsubscribe();
+  }
+
+  
+  private subscribeToStreams() {
+    this.localStreamSub = this.callService.localStream$.subscribe(stream => {
+      // Force 
+      this.ngZone.run(() => {
+        if (stream && this.localVideo && this.localVideo.nativeElement) {
+          this.localVideo.nativeElement.srcObject = stream;
+        }
+      });
+    });
+
+    this.remoteStreamSub = this.callService.remoteStream$.subscribe(stream => {
+      this.ngZone.run(() => {
+        if (stream && stream.getTracks().length > 0 && this.remoteVideo && this.remoteVideo.nativeElement) {
+          this.remoteVideo.nativeElement.srcObject = stream;
+          this.callStatus = 'Connected';
+        } else {
+          
+          if (this.callStatus === 'Connected') {
+             this.callStatus = 'Reconnecting...';
+          }
+        }
+      });
+    });
   }
 
   toggleAudio() {
     this.isAudioMuted = !this.isAudioMuted;
-    if (this.callService.localStream) {
-      this.callService.localStream.getAudioTracks().forEach(track => {
+    const localStream = this.callService['localStreamSubject'].value;
+    if (localStream) {
+      localStream.getAudioTracks().forEach(track => {
         track.enabled = !this.isAudioMuted;
       });
     }
@@ -54,8 +79,9 @@ export class CallScreenComponent implements AfterViewInit {
 
   toggleVideo() {
     this.isVideoOff = !this.isVideoOff;
-    if (this.callService.localStream) {
-      this.callService.localStream.getVideoTracks().forEach(track => {
+    const localStream = this.callService['localStreamSubject'].value;
+    if (localStream) {
+      localStream.getVideoTracks().forEach(track => {
         track.enabled = !this.isVideoOff;
       });
     }

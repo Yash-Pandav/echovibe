@@ -34,7 +34,6 @@ export class ChatRoomComponent implements OnInit {
   receiverData: any = null; 
   fullScreenImage: string | null = null;
 
-  // === CALLING SYSTEM VARIABLES ===
   isInCall = false;
   isIncomingCall = false;
   isVideoCall = false;
@@ -70,10 +69,6 @@ export class ChatRoomComponent implements OnInit {
     });
   }
 
-  // ==========================================
-  //         WEBRTC CALLING LOGIC
-  // ==========================================
-
   listenForCalls() {
     const callDoc = doc(this.firestore, `calls/${this.chatId}`);
     
@@ -83,17 +78,15 @@ export class ChatRoomComponent implements OnInit {
 
         if (!snapshot.exists() && this.isInCall) {
           this.endCall(false); 
+          return;
         }
 
         if (snapshot.exists() && data) {
-          if (data['offer'] && !this.isInCall && data['callerId'] !== this.currentUserId) {
+          if (data['offer'] && !this.isInCall && !this.isIncomingCall && data['callerId'] !== this.currentUserId) {
             this.isIncomingCall = true;
             this.isVideoCall = data['isVideo'];
           }
 
-          if (data['answer'] && this.isInCall && data['callerId'] === this.currentUserId) {
-             this.callStatus = 'Connected';
-          }
         }
         this.cdr.detectChanges();
       });
@@ -114,9 +107,9 @@ export class ChatRoomComponent implements OnInit {
         isVideo: isVideo
       });
     } catch (error) {
-      console.error("Camera/Mic Permission Denied", error);
-      alert("Please allow Camera & Microphone access to make calls.");
-      this.endCall();
+      console.error("Call start failed:", error);
+      alert("Call connection failed. Please allow camera/mic access.");
+      this.endCall(true);
     }
   }
 
@@ -129,9 +122,9 @@ export class ChatRoomComponent implements OnInit {
       await this.callService.setupMediaSources(this.isVideoCall);
       await this.callService.answerCall(this.chatId);
     } catch (error) {
-      console.error("Camera/Mic Permission Denied", error);
-      alert("Please allow Camera & Microphone access to answer calls.");
-      this.endCall();
+      console.error("Permission or Connection issue:", error);
+      alert("Cannot accept call. Allow camera/mic permission.");
+      this.endCall(true); 
     }
   }
 
@@ -154,10 +147,6 @@ export class ChatRoomComponent implements OnInit {
   rejectCall() {
     this.endCall(true);
   }
-
-  // ==========================================
-  //         EXISTING CHAT LOGIC
-  // ==========================================
 
   listenToReceiverStatus() {
     const userRef = doc(this.firestore, `users/${this.receiverId}`);

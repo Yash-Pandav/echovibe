@@ -1,60 +1,109 @@
 import { Injectable } from '@angular/core';
 import { Firestore, collection, doc, setDoc, updateDoc, onSnapshot, addDoc, getDoc } from '@angular/fire/firestore';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CallService {
-  peerConnection!: RTCPeerConnection;
-  localStream!: MediaStream;
-  remoteStream!: MediaStream;
+  private peerConnection!: RTCPeerConnection;
+  
+  
+  private localStreamSubject = new BehaviorSubject<MediaStream | null>(null);
+  localStream$ = this.localStreamSubject.asObservable();
+  
+  private remoteStreamSubject = new BehaviorSubject<MediaStream | null>(null);
+  remoteStream$ = this.remoteStreamSubject.asObservable();
 
-  // Free Google STUN servers (IP address find)
+  // Free Google STUN servers (Added extra standard servers for better reliability)
   servers = {
     iceServers: [
-      { urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] }
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'stun:stun2.l.google.com:19302' },
+      { urls: 'stun:stun3.l.google.com:19302' },
+      { urls: 'stun:stun4.l.google.com:19302' }
     ],
     iceCandidatePoolSize: 10,
   };
 
   constructor(private firestore: Firestore) {}
 
-  // 1. Camera aur Mic
+  // 1. Camera aur Mic on 
   async setupMediaSources(isVideo: boolean) {
-    this.localStream = await navigator.mediaDevices.getUserMedia({ video: isVideo, audio: true });
-    this.remoteStream = new MediaStream();
-
-    this.peerConnection = new RTCPeerConnection(this.servers);
-
     
-    this.localStream.getTracks().forEach((track) => {
-      this.peerConnection.addTrack(track, this.localStream);
-    });
-
-    
-    this.peerConnection.ontrack = (event) => {
-      event.streams[0].getTracks().forEach((track) => {
-        this.remoteStream.addTrack(track);
-      });
+    const constraints = {
+      video: isVideo ? {
+        width: { ideal: 720, max: 1280 }, 
+        height: { ideal: 540, max: 720 },
+        frameRate: { ideal: 20, max: 30 } 
+      } : false,
+      audio: true
     };
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      this.localStreamSubject.value?.getTracks().forEach(track => track.stop());
+      
+      this.localStreamSubject.next(stream);
+      this.remoteStreamSubject.next(new MediaStream()); 
+
+      this.peerConnection = new RTCPeerConnection(this.servers);
+
+     
+      stream.getTracks().forEach((track) => {
+        this.peerConnection.addTrack(track, stream);
+      });
+
+    //  remort stream
+      this.peerConnection.ontrack = (event) => {
+        const remoteStream = this.remoteStreamSubject.value;
+        if (remoteStream) {
+          event.streams[0].getTracks().forEach((track) => {
+            remoteStream.addTrack(track);
+          });
+          this.remoteStreamSubject.next(remoteStream); 
+        }
+      };
+      
+      // Track ended listeners to handle glitches
+      stream.getTracks().forEach(track => {
+        track.onended = () => {
+          console.log(`Local track ${track.kind} ended unexpected`);
+          
+        };
+      });
+
+    } catch (error) {
+      console.error('Error accessing media devices.', error);
+      throw error; 
+    }
   }
 
-  // 2. Call recive 
+  // Helper method for create/answer call to share setup media check
+  private ensurePeerConnection() {
+    if (!this.peerConnection) {
+      throw new Error("setupMediaSources must be called before create/answer call.");
+    }
+    return this.peerConnection;
+  }
+
+  // 2. Create Offer (call recive)
   async createCall(callId: string) {
+    const pc = this.ensurePeerConnection();
     const callDoc = doc(collection(this.firestore, 'calls'), callId);
     const offerCandidates = collection(callDoc, 'offerCandidates');
     const answerCandidates = collection(callDoc, 'answerCandidates');
 
     
-    this.peerConnection.onicecandidate = (event) => {
+    pc.onicecandidate = (event) => {
       if (event.candidate) {
         addDoc(offerCandidates, event.candidate.toJSON());
       }
     };
 
-    
-    const offerDescription = await this.peerConnection.createOffer();
-    await this.peerConnection.setLocalDescription(offerDescription);
+    // create offer and send to the firebase
+    const offerDescription = await pc.createOffer();
+    await pc.setLocalDescription(offerDescription);
 
     const offer = {
       sdp: offerDescription.sdp,
@@ -63,12 +112,12 @@ export class CallService {
 
     await setDoc(callDoc, { offer });
 
-    // answer ka wait 
+    // wait for the answer
     onSnapshot(callDoc, (snapshot) => {
       const data = snapshot.data();
-      if (!this.peerConnection.currentRemoteDescription && data?.['answer']) {
+      if (!pc.currentRemoteDescription && data?.['answer']) {
         const answerDescription = new RTCSessionDescription(data['answer']);
-        this.peerConnection.setRemoteDescription(answerDescription);
+        pc.setRemoteDescription(answerDescription);
       }
     });
 
@@ -77,19 +126,20 @@ export class CallService {
       snapshot.docChanges().forEach((change) => {
         if (change.type === 'added') {
           const candidate = new RTCIceCandidate(change.doc.data());
-          this.peerConnection.addIceCandidate(candidate);
+          pc.addIceCandidate(candidate);
         }
       });
     });
   }
 
-  // 3. Call Uthana (Answer Call)
+  // 3. Answer Call
   async answerCall(callId: string) {
+    const pc = this.ensurePeerConnection();
     const callDoc = doc(this.firestore, `calls/${callId}`);
     const offerCandidates = collection(callDoc, 'offerCandidates');
     const answerCandidates = collection(callDoc, 'answerCandidates');
 
-    this.peerConnection.onicecandidate = (event) => {
+    pc.onicecandidate = (event) => {
       if (event.candidate) {
         addDoc(answerCandidates, event.candidate.toJSON());
       }
@@ -97,10 +147,10 @@ export class CallService {
 
     const callData = (await getDoc(callDoc)).data();
     const offerDescription = callData?.['offer'];
-    await this.peerConnection.setRemoteDescription(new RTCSessionDescription(offerDescription));
+    await pc.setRemoteDescription(new RTCSessionDescription(offerDescription));
 
-    const answerDescription = await this.peerConnection.createAnswer();
-    await this.peerConnection.setLocalDescription(answerDescription);
+    const answerDescription = await pc.createAnswer();
+    await pc.setLocalDescription(answerDescription);
 
     const answer = {
       sdp: answerDescription.sdp,
@@ -113,7 +163,7 @@ export class CallService {
       snapshot.docChanges().forEach((change) => {
         if (change.type === 'added') {
           const candidate = new RTCIceCandidate(change.doc.data());
-          this.peerConnection.addIceCandidate(candidate);
+          pc.addIceCandidate(candidate);
         }
       });
     });
@@ -122,13 +172,21 @@ export class CallService {
   // 4. Call Cut 
   hangup() {
     if (this.peerConnection) {
+      this.peerConnection.onicecandidate = null;
+      this.peerConnection.ontrack = null;
       this.peerConnection.close();
+      this.peerConnection = null as any; 
     }
-    if (this.localStream) {
-      this.localStream.getTracks().forEach(track => track.stop());
+    
+    
+    if (this.localStreamSubject.value) {
+      this.localStreamSubject.value.getTracks().forEach(track => track.stop());
+      this.localStreamSubject.next(null);
     }
-    if (this.remoteStream) {
-      this.remoteStream.getTracks().forEach(track => track.stop());
+    
+    if (this.remoteStreamSubject.value) {
+      this.remoteStreamSubject.value.getTracks().forEach(track => track.stop());
+      this.remoteStreamSubject.next(null);
     }
   }
 }
