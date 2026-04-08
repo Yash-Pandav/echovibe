@@ -82,11 +82,11 @@ export class ChatRoomComponent implements OnInit {
         }
 
         if (snapshot.exists() && data) {
-          if (data['offer'] && !this.isInCall && !this.isIncomingCall && data['callerId'] !== this.currentUserId) {
+          // 🔥 FIX: Ensures we only trigger incoming call when callerId is present
+          if (data['offer'] && data['callerId'] && !this.isInCall && !this.isIncomingCall && data['callerId'] !== this.currentUserId) {
             this.isIncomingCall = true;
             this.isVideoCall = data['isVideo'];
           }
-
         }
         this.cdr.detectChanges();
       });
@@ -100,12 +100,10 @@ export class ChatRoomComponent implements OnInit {
       this.callStatus = 'Calling...';
       
       await this.callService.setupMediaSources(isVideo);
-      await this.callService.createCall(this.chatId);
-
-      await updateDoc(doc(this.firestore, `calls/${this.chatId}`), {
-        callerId: this.currentUserId,
-        isVideo: isVideo
-      });
+      
+      // 🔥 FIX: Passing everything in one line! No updateDoc needed anymore.
+      await this.callService.createCall(this.chatId, this.currentUserId, isVideo);
+      
     } catch (error) {
       console.error("Call start failed:", error);
       alert("Call connection failed. Please allow camera/mic access.");

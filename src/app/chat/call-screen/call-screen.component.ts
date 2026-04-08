@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, Input, Output, EventEmitter, OnInit, OnDestroy, inject, NgZone } from '@angular/core';
+import { Component, ElementRef, ViewChild, Input, Output, EventEmitter, AfterViewInit, OnDestroy, inject, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CallService } from '../../services/call.service';
 import { Subscription } from 'rxjs';
@@ -10,14 +10,14 @@ import { Subscription } from 'rxjs';
   templateUrl: './call-screen.component.html',
   styleUrls: ['./call-screen.component.scss']
 })
-export class CallScreenComponent implements OnInit, OnDestroy {
+// 🔥 FIX: Changed from OnInit to AfterViewInit
+export class CallScreenComponent implements AfterViewInit, OnDestroy {
   @ViewChild('localVideo') localVideo!: ElementRef<HTMLVideoElement>;
   @ViewChild('remoteVideo') remoteVideo!: ElementRef<HTMLVideoElement>;
 
   @Input() isVideoCall: boolean = true;
   @Input() callerName: string = 'Friend';
   
-  // Status is managed 
   callStatus: string = 'Connecting...';
   
   @Output() callEnded = new EventEmitter<void>();
@@ -31,20 +31,18 @@ export class CallScreenComponent implements OnInit, OnDestroy {
   isAudioMuted = false;
   isVideoOff = false;
 
-  ngOnInit() {
+  // 🔥 FIX: This ensures HTML <video> tags are 100% loaded before we attach the camera!
+  ngAfterViewInit() {
     this.subscribeToStreams();
   }
 
   ngOnDestroy() {
-    
     this.localStreamSub?.unsubscribe();
     this.remoteStreamSub?.unsubscribe();
   }
 
-  
   private subscribeToStreams() {
     this.localStreamSub = this.callService.localStream$.subscribe(stream => {
-      // Force 
       this.ngZone.run(() => {
         if (stream && this.localVideo && this.localVideo.nativeElement) {
           this.localVideo.nativeElement.srcObject = stream;
@@ -58,7 +56,6 @@ export class CallScreenComponent implements OnInit, OnDestroy {
           this.remoteVideo.nativeElement.srcObject = stream;
           this.callStatus = 'Connected';
         } else {
-          
           if (this.callStatus === 'Connected') {
              this.callStatus = 'Reconnecting...';
           }
@@ -69,7 +66,7 @@ export class CallScreenComponent implements OnInit, OnDestroy {
 
   toggleAudio() {
     this.isAudioMuted = !this.isAudioMuted;
-    const localStream = this.callService['localStreamSubject'].value;
+    const localStream = this.callService['localStreamSubject'].value; 
     if (localStream) {
       localStream.getAudioTracks().forEach(track => {
         track.enabled = !this.isAudioMuted;

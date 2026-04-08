@@ -8,14 +8,12 @@ import { BehaviorSubject } from 'rxjs';
 export class CallService {
   private peerConnection!: RTCPeerConnection;
   
-  
   private localStreamSubject = new BehaviorSubject<MediaStream | null>(null);
   localStream$ = this.localStreamSubject.asObservable();
   
   private remoteStreamSubject = new BehaviorSubject<MediaStream | null>(null);
   remoteStream$ = this.remoteStreamSubject.asObservable();
 
-  // Free Google STUN servers (Added extra standard servers for better reliability)
   servers = {
     iceServers: [
       { urls: 'stun:stun1.l.google.com:19302' },
@@ -28,14 +26,12 @@ export class CallService {
 
   constructor(private firestore: Firestore) {}
 
-  // 1. Camera aur Mic on 
   async setupMediaSources(isVideo: boolean) {
-    
     const constraints = {
       video: isVideo ? {
-        width: { ideal: 720, max: 1280 }, 
+        width: { ideal: 720, max: 1280 },
         height: { ideal: 540, max: 720 },
-        frameRate: { ideal: 20, max: 30 } 
+        frameRate: { ideal: 20, max: 30 }
       } : false,
       audio: true
     };
@@ -49,12 +45,10 @@ export class CallService {
 
       this.peerConnection = new RTCPeerConnection(this.servers);
 
-     
       stream.getTracks().forEach((track) => {
         this.peerConnection.addTrack(track, stream);
       });
 
-    //  remort stream
       this.peerConnection.ontrack = (event) => {
         const remoteStream = this.remoteStreamSubject.value;
         if (remoteStream) {
@@ -64,22 +58,12 @@ export class CallService {
           this.remoteStreamSubject.next(remoteStream); 
         }
       };
-      
-      // Track ended listeners to handle glitches
-      stream.getTracks().forEach(track => {
-        track.onended = () => {
-          console.log(`Local track ${track.kind} ended unexpected`);
-          
-        };
-      });
-
     } catch (error) {
       console.error('Error accessing media devices.', error);
       throw error; 
     }
   }
 
-  // Helper method for create/answer call to share setup media check
   private ensurePeerConnection() {
     if (!this.peerConnection) {
       throw new Error("setupMediaSources must be called before create/answer call.");
@@ -87,21 +71,19 @@ export class CallService {
     return this.peerConnection;
   }
 
-  // 2. Create Offer (call recive)
-  async createCall(callId: string) {
+  // 🔥 FIX: Added callerId and isVideo parameters here
+  async createCall(callId: string, callerId: string, isVideo: boolean) {
     const pc = this.ensurePeerConnection();
     const callDoc = doc(collection(this.firestore, 'calls'), callId);
     const offerCandidates = collection(callDoc, 'offerCandidates');
     const answerCandidates = collection(callDoc, 'answerCandidates');
 
-    
     pc.onicecandidate = (event) => {
       if (event.candidate) {
         addDoc(offerCandidates, event.candidate.toJSON());
       }
     };
 
-    // create offer and send to the firebase
     const offerDescription = await pc.createOffer();
     await pc.setLocalDescription(offerDescription);
 
@@ -110,9 +92,13 @@ export class CallService {
       type: offerDescription.type,
     };
 
-    await setDoc(callDoc, { offer });
+    // 🔥 FIX: Saving everything together in ONE shot! No more race conditions.
+    await setDoc(callDoc, { 
+      offer: offer,
+      callerId: callerId,
+      isVideo: isVideo
+    });
 
-    // wait for the answer
     onSnapshot(callDoc, (snapshot) => {
       const data = snapshot.data();
       if (!pc.currentRemoteDescription && data?.['answer']) {
@@ -121,7 +107,6 @@ export class CallService {
       }
     });
 
-    
     onSnapshot(answerCandidates, (snapshot) => {
       snapshot.docChanges().forEach((change) => {
         if (change.type === 'added') {
@@ -132,7 +117,6 @@ export class CallService {
     });
   }
 
-  // 3. Answer Call
   async answerCall(callId: string) {
     const pc = this.ensurePeerConnection();
     const callDoc = doc(this.firestore, `calls/${callId}`);
@@ -169,7 +153,6 @@ export class CallService {
     });
   }
 
-  // 4. Call Cut 
   hangup() {
     if (this.peerConnection) {
       this.peerConnection.onicecandidate = null;
@@ -177,7 +160,6 @@ export class CallService {
       this.peerConnection.close();
       this.peerConnection = null as any; 
     }
-    
     
     if (this.localStreamSubject.value) {
       this.localStreamSubject.value.getTracks().forEach(track => track.stop());
