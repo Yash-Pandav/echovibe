@@ -69,6 +69,36 @@ export class ChatRoomComponent implements OnInit {
     });
   }
 
+  
+  //  BACKGROUND PUSH NOTIFICATION SYSTEM
+  
+  async sendPushNotification(title: string, body: string) {
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    // Check if the receiver has an FCM token saved in the database
+    if (this.receiverData && this.receiverData.fcmToken) {
+      try {
+        // Call the free Vercel API backend we just created!
+        await fetch('/api/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token: this.receiverData.fcmToken,
+            title: title,
+            body: body,
+            url: '/' 
+          })
+        });
+        console.log("Notification trigger sent successfully to Vercel API");
+      } catch (error) {
+        console.error("Error triggering push notification:", error);
+      }
+    }
+  }
+
+  
+  // WEBRTC
+  
   listenForCalls() {
     const callDoc = doc(this.firestore, `calls/${this.chatId}`);
     
@@ -82,7 +112,6 @@ export class ChatRoomComponent implements OnInit {
         }
 
         if (snapshot.exists() && data) {
-          // 🔥 FIX: Ensures we only trigger incoming call when callerId is present
           if (data['offer'] && data['callerId'] && !this.isInCall && !this.isIncomingCall && data['callerId'] !== this.currentUserId) {
             this.isIncomingCall = true;
             this.isVideoCall = data['isVideo'];
@@ -100,9 +129,13 @@ export class ChatRoomComponent implements OnInit {
       this.callStatus = 'Calling...';
       
       await this.callService.setupMediaSources(isVideo);
-      
-      // 🔥 FIX: Passing everything in one line! No updateDoc needed anymore.
       await this.callService.createCall(this.chatId, this.currentUserId, isVideo);
+      
+      // Send background notification for the Call
+      this.sendPushNotification(
+        `Incoming ${isVideo ? 'Video' : 'Audio'} Call`, 
+        `Tap to open Echovibe and answer.`
+      );
       
     } catch (error) {
       console.error("Call start failed:", error);
@@ -146,6 +179,9 @@ export class ChatRoomComponent implements OnInit {
     this.endCall(true);
   }
 
+  
+ 
+  
   listenToReceiverStatus() {
     const userRef = doc(this.firestore, `users/${this.receiverId}`);
     onSnapshot(userRef, (docSnap) => {
@@ -195,7 +231,12 @@ export class ChatRoomComponent implements OnInit {
     
     this.chatService.updateTypingStatus(this.chatId, this.currentUserId, false);
     
-    this.chatService.sendMessage(this.chatId, this.currentUserId, textToSend, this.receiverId).catch(console.error);
+    this.chatService.sendMessage(this.chatId, this.currentUserId, textToSend, this.receiverId)
+      .then(() => {
+        
+        this.sendPushNotification("New Message", textToSend);
+      })
+      .catch(console.error);
   }
 
   deleteMessage(messageId: string) {
@@ -250,6 +291,10 @@ export class ChatRoomComponent implements OnInit {
       reader.onload = () => {
         const base64String = reader.result as string;
         this.chatService.sendMessage(this.chatId, this.currentUserId, '', this.receiverId, base64String)
+          .then(() => {
+             
+             this.sendPushNotification("New Image", "📷 Someone sent you an image.");
+          })
           .catch(console.error);
       };
     }
