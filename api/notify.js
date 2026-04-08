@@ -10,7 +10,6 @@ if (!admin.apps.length) {
   });
 }
 
-
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -32,13 +31,24 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'FCM Token is required' });
     }
 
+    
     const message = {
       data: {
         title: title || 'Echovibe',
         body: body || 'You have a new message!',
         click_action: url || '/chat-list'
       },
-      token: token
+      token: token,
+      
+      android: {
+        priority: 'high',
+      },
+      
+      webpush: {
+        headers: {
+          Urgency: 'high'
+        }
+      }
     };
 
     const response = await admin.messaging().send(message);
